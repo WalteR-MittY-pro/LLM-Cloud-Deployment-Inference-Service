@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lab-model
+  namespace: team-inference-lab
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: lab-model}
+  template:
+    metadata:
+      labels: {app: lab-model}
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels: {app: lab-model}
+            topologyKey: kubernetes.io/hostname
+      containers:
+      - name: vllm
+        image: VLLM_IMAGE_PLACEHOLDER
+        args: ["--model", "/models/current", "--served-model-name", "lab-model", "--max-model-len", "4096"]
+        ports: [{name: http, containerPort: 8000}]
+        resources:
+          limits: {nvidia.com/gpu: 1}
+        startupProbe:
+          httpGet: {path: /health, port: http}
+          periodSeconds: 10
+          failureThreshold: 90
+        readinessProbe:
+          httpGet: {path: /health, port: http}
+        volumeMounts:
+        - {name: model, mountPath: /models/current, readOnly: true}
+        - {name: shm, mountPath: /dev/shm}
+      volumes:
+      - name: model
+        hostPath: {path: MODEL_DIR_PLACEHOLDER, type: Directory}
+      - name: shm
+        emptyDir: {medium: Memory, sizeLimit: 2Gi}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: lab-model, namespace: team-inference-lab}
+spec:
+  selector: {app: lab-model}
+  ports: [{name: http, port: 8000, targetPort: http}]

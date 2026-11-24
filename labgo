@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+if command -v go >/dev/null 2>&1; then exec go "$@"; fi
+if [ "$(uname)" = Darwin ] && [ -x "$HOME/Library/Caches/team-inference-lab/go/bin/go" ]; then
+  exec "$HOME/Library/Caches/team-inference-lab/go/bin/go" "$@"
+fi
+echo 'Install Go 1.24+ (https://go.dev/doc/install), then rerun ./labgo' >&2
+exit 1
