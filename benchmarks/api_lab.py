@@ -28,10 +28,13 @@ def load_workload(filename):
 
 def run(args, path, meta):
     sys.path.insert(0, str(ROOT / "course/day-01"))
-    from client import run as chat, read_chat_stream, list_models
+    from client import run as chat, read_chat_stream, list_models, open_stream
 
     build = lesson(1, args.impl, "request_body").build_request
-    parse = lesson(1, args.impl, "stream").read_chat_stream if args.level2 else read_chat_stream
+    parse, connect = read_chat_stream, open_stream
+    if args.level2:
+        stream = lesson(1, args.impl, "stream")
+        parse, connect = stream.read_chat_stream, stream.open_stream
     rows = load_workload(args.workload)
     payload = Path(args.workload).read_bytes()
     (path / "workload.jsonl").write_bytes(payload)
@@ -69,7 +72,14 @@ def run(args, path, meta):
             try:
                 with (path / f"stream-{repeat}-{i}.sse").open("wb") as raw:
                     answer = chat(
-                        call, build, parse, observation=obs, echo=False, raw_log=raw, available=available
+                        call,
+                        build,
+                        parse,
+                        observation=obs,
+                        echo=False,
+                        raw_log=raw,
+                        available=available,
+                        connect=connect,
                     )
                 obs.update(status="ok", answer=answer["answer"], text_chunks=answer["text_chunks"])
             except Exception as exc:

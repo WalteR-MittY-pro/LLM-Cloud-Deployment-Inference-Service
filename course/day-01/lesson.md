@@ -14,7 +14,7 @@ t0 发 POST → 服务端排队 → prefill → 采样 token → 解码为文本
 ## 引导与三个难度
 
 1. **Level 1** 按 README 启动两种模型。先指出 curl 示例中的模型、输入、预算、结束条件，再在 starter/request_body.py 写出请求字典。切换模型后保留原请求内容。
-2. **Level 2** 打开 [流解析骨架](starter/stream.py)，读一行字节，分别判断空行、角色事件、正文、服务端错误、[DONE] 和提前 EOF。先让模拟流测试通过。已有 [client.py](client.py) 处理网络连接和可设的读超时，在回环服务上验证“已收到一半正文后断开”的结果。通过 `--level2` 让自己的解析器真正进入网络调用。
+2. **Level 2** 打开 [流解析骨架](starter/stream.py)，读一行字节，分别判断空行、角色事件、正文、服务端错误、[DONE] 和提前 EOF。先让模拟流测试通过。再实现 open_stream，把读超时传入 HTTP 调用；读取 HTTP 错误正文并保留状态码。先看 [client.py](client.py) 怎样关闭响应，再在回环服务上验证“已收到一半正文后断开”的结果。通过 `--level2` 让自己的解析器真正进入网络调用。
 3. **Level 3** 用同一个已部署端点和足够长的固定 JSONL 负载，对比并发上限 1、4、8。把输入请求时间间距调到足以形成排队，三次用同一文件。先预热，分别观察客户端派发延迟、成功请求/秒、首段正文和错误率。有服务端 metrics 时再判断服务端是否排队。
 
 从仓库根运行，API 客户端使用 CPU 环境，vLLM 进程在单独的 GPU 服务环境中：
@@ -28,6 +28,6 @@ make lab DAY=01 ARGS="--level2 --warmup 1 --repeat 3 --concurrency 1"
 
 默认的两条公开样例用于冒烟。对照实验应增大样本数，传 `--workload 路径`，并按实际启动配置传 `--model-revision`、`--tokenizer-revision`。每个 run 单独保存原始 SSE、失败行和报告。模拟流测试不占 GPU。真实模型验收需要两个型号各自的服务日志与成功调用。客户端的 `--timeout` 是单次网络读取超时；持续写入心跳的连接不会因此达到总时限。
 
-**工业源码。** 沿 vLLM 的 API server 进入 OpenAI chat serving，找到生成响应的异步迭代，再对照 client.read_chat_stream 对同一事件做了什么。使用[固定 vLLM commit 的入口目录](https://github.com/vllm-project/vllm/tree/62d4bc3c7e33b1b6c906e233e6af2d3506c482ca/vllm/entrypoints/openai)。
+**工业源码。** 从 HTTP handler 的 create_chat_completion 走到 OpenAIServingChat.create_chat_completion，再跟 chat_completion_stream_generator 看最后一个 [DONE] 如何发出，并对照自己的 read_chat_stream。[HTTP 路由](https://github.com/vllm-project/vllm/blob/62d4bc3c7e33b1b6c906e233e6af2d3506c482ca/vllm/entrypoints/openai/chat_completion/api_router.py#L59) · [SSE 生成函数](https://github.com/vllm-project/vllm/blob/62d4bc3c7e33b1b6c906e233e6af2d3506c482ca/vllm/entrypoints/openai/chat_completion/serving.py#L473)
 
 **自测。** 只有 role 事件就断开时，status、first_text_ms、ttft_ms 应分别是什么？正文已经收到后断开呢？在 raw 日志里构造这两种情况并检查失败记录。

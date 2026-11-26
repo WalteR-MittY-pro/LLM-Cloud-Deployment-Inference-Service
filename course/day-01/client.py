@@ -32,7 +32,18 @@ def list_models(base_url, timeout):
         return [m["id"] for m in json.load(response)["data"]]
 
 
-def run(args, build_request, parse_stream=read_chat_stream, *, observation=None, echo=True,
+def open_stream(request, timeout, raw_log=None):
+    try:
+        return urlopen(request, timeout=timeout)
+    except HTTPError as exc:
+        with exc:
+            detail = exc.read(65536)
+        if raw_log is not None:
+            raw_log.write(detail)
+        raise RuntimeError(f"HTTP {exc.code}: {detail.decode('utf-8', errors='replace')}") from exc
+
+
+def run(args, build_request, parse_stream=read_chat_stream, *, connect=open_stream, observation=None, echo=True,
         raw_log=None, available=None):
     observation = {} if observation is None else observation
     body = build_request(args.model, args.prompt, args.max_tokens)
@@ -46,14 +57,7 @@ def run(args, build_request, parse_stream=read_chat_stream, *, observation=None,
                       headers={"Content-Type": "application/json"})
     start = time.perf_counter()
     chunks = []
-    try:
-        response = urlopen(request, timeout=args.timeout)
-    except HTTPError as exc:
-        with exc:
-            detail = exc.read(65536)
-        if raw_log is not None:
-            raw_log.write(detail)
-        raise RuntimeError(f"HTTP {exc.code}: {detail.decode('utf-8', errors='replace')}") from exc
+    response = connect(request, args.timeout, raw_log)
     with response:
         def lines():
             for line in response:
@@ -103,7 +107,7 @@ if __name__ == "__main__":
         from reference.request_body import build_request
     else:
         from starter.request_body import build_request
-    parse = read_chat_stream
+    parse, connect = read_chat_stream, open_stream
     if args.level2 and not args.reference:
-        from starter.stream import read_chat_stream as parse
-    run(args, build_request, parse)
+        from starter.stream import read_chat_stream as parse, open_stream as connect
+    run(args, build_request, parse, connect=connect)

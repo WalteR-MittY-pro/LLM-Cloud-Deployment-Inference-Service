@@ -2,7 +2,7 @@
 
 两个问题看起来相似，开头实际送入模型的 token 却可能不同。今天构造缓存一定能复用、部分能复用和完全不能复用的请求。
 
-**实验起点**　沿用 Day 07 的请求格式、固定 tokenizer/revision 和一台 vLLM GPU 服务。
+**实验起点**　沿用 Day 07 的[共享请求格式](../../benchmarks/schemas/workload.json)、固定 tokenizer/revision 和一台 vLLM GPU 服务。
 
 ## 动手要求
 

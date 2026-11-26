@@ -2,11 +2,11 @@
 
 一批长短不一的请求同时生成时，一个短请求完成后，它的位置能否立即交给下一个人？这决定了队列里其余请求等多久。
 
-**实验起点**　CPU 即可。为 Day 10、12、19、28 约定同一个 JSONL 请求格式和虚拟时钟。
+**实验起点**　CPU 即可。复用[公共 JSONL 契约](../../benchmarks/schemas/workload.json)与[样例](../../benchmarks/datasets/first-chat.jsonl)，再给模拟器引入虚拟时钟。Day 10、12、19、28 使用同一输入。
 
 ## 动手要求
 
-1. 定义 request_id、session_id、arrival_ms、input_tokens、output_tokens、prefix_id；保留可选的任务依赖、工具等待和脱敏输入引用。为到达时间相同的请求设确定的顺序。
+1. 沿用 request_id、session_id、arrival_ms、prompt、output_token_budget；可补 input_tokens、prefix_id、任务依赖和工具等待。输出预算是输入，实际生成长度属于结果。为到达时间相同的请求设确定的顺序。
 2. 实现固定批与迭代级 continuous batching。显式指定每轮成本与 token budget，在等长、长短混合和突发到达三种输入上运行。
 3. 跟踪每个请求的入队、首次执行、完成时间。挑一个短请求手算几轮，同程序对照；再改变预算，观察排队与利用率。
 
