@@ -34,7 +34,8 @@
         "api_observed",
         "gpu_measured",
         "cpu_measured",
-        "simulation"
+        "simulation",
+        "inventory"
       ]
     },
     "status": {
@@ -55,6 +56,18 @@
     },
     "environment": {
       "type": "object"
+    },
+    "profile": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "env": {
+      "type": [
+        "string",
+        "null"
+      ]
     }
   }
 }

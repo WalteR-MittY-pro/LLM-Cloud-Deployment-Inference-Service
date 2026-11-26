@@ -57,3 +57,29 @@ RTX 4070 Ti SUPER、H200、真实 vLLM 服务流、CUDA Event 性能、双卡互
 | 05 | 20261126T094449283681Z-d929077912 | 6 个 greedy token 与官方实现及 Ubuntu 的本次运行一致。官方生成配置含采样参数；本实验显式关闭采样 |
 
 本机快照与原始记录位于 Git 忽略的 runs/ 下。新机器用前述 `--pretrained` 命令拉取相同 revision。
+
+## Day 00 环境适配增量
+
+基线为 `1aca20b`，开始前工作树干净，原有 22 个 CPU 测试通过。核对了增量包的 AGENT_INTEGRATION、六份 JSON、三个脚本和测试，独立 Markdown 与包内指南逐字节相同。将操作指南放入 [Day 00](../course/day-00/README.md)，沿用原有三份软件锁、Run ID、数值 oracle 和 API 回放器。
+
+| 本批检查 | 证据与边界 |
+|---|---|
+| 软硬件选择 | make setup/doctor/lab/report 接受 PROFILE；旧命令仍可用，历史缺失字段的报告可重算。盘点、操作人声明的分配和冒烟证据分别保存 |
+| 探测和失败 | 本机 macOS CPU 跑通盘点；用 H200 profile 在无 CUDA 的本机测试失败路径，进程退出 1，make 退出 2，能力为 blocked。该记录只用于验证失败处理 |
+| 探测权限 | 无明确 context 时不执行 kubectl；云端 profile 拒绝集群探测。模拟节点输出只保留标签、就绪与 allocatable，不记录节点名和 UUID |
+| 部署清单 | 0.6B/4B 复用 Day 01 revision；官方 v0.34.0 的 linux/amd64 manifest digest 与 OCI Entrypoint 已核对。单/双副本 Namespace、Deployment、Service 通过 Kubernetes v1.34.0 官方 OpenAPI 静态校验。未向集群提交资源 |
+| 混合 API | 两个本地 HTTP fixture 各收到一条请求，目标和成功数出现在同一 Run ID，拒绝重定向。只验证回放器，家庭→云端线路与真实模型仍待验收 |
+| 自动化 | `make check` 的 39 项 CPU 测试与 Ruff 均通过；包含原测试、增量包测试及新增的 ENV/PROFILE、schema、权限、失败、路由与历史记录测试；独立命令 `python3 -m unittest discover -s environments/lab-topology/tests -v` 以标准库独立运行，10 项均通过 |
+
+本次还在 macOS CPU 离线复跑固定 Qwen3-0.6B。Day 03 的 logits 最大绝对差为 0；Day 04 的 KV 实际与理论均为 1,835,008 字节；Day 05 的六个 greedy token 与官方结果逐个相同。一轮回归曾遇到 HTTP 400 测试服务提前关闭连接；将测试服务改为读完请求体再返回错误，保留了原错误正文断言。
+
+### 操作者在授权设备上补齐的证据
+
+| 地点 | 现场检查 | 状态 |
+|---|---|---|
+| 家庭 RTX 两台 | 核实第二台卡型、操作系统、LAN 双向带宽；至少一个已分配 GPU 完成 CUDA 算术及真实 Day 01 vLLM 流式请求 | 待验 |
+| 家庭 K3s | 两个 Ready 节点、Device Plugin 可分配量、两个 GPU Pod 的独立响应、Helm 更新、监控与 llm-d 端点选择 | 待验 |
+| H200 平台容器 | 平台分配、同容器可见性、真实 NCCL 各 rank 求和、NCCL Tests、KV/prefill/decode/kernel、等卡 TP/DP/P-D 与兼容的用户态 Dynamo | 待验 |
+| 家庭 ↔ 云端 | 授权隧道或 API 代理、两端同模型、相同负载和缓存设置、逐请求目标与服务日志；分离网络 RTT、排队及计算时间 | 待验 |
+
+真实硬件性能栏保持空白。家庭和云端独立运行；主机安装、集群资源变更与隧道建立由相应环境的授权操作者执行。

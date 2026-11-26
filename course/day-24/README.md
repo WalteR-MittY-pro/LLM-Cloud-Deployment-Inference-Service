@@ -2,7 +2,7 @@
 
 发布新模型时，客户端不应在权重尚未加载时接入，重建 Pod 也不应每次重新下载同一份权重。把这些行为写进部署配置。
 
-**实验起点**　基于 Day 23 通过的 manifests、可用 StorageClass、已授权的 Gateway/Ingress 和 GPU 配额。
+**实验起点**　家庭 K3s 上 Day 23 实际通过的 manifests、可用 StorageClass、明确授权的 Gateway/Ingress 和两张 RTX 的配额。
 
 ## 动手要求
 

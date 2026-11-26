@@ -35,6 +35,7 @@ class StreamExerciseTests(unittest.TestCase):
                 pass
 
             def do_POST(self):
+                self.rfile.read(int(self.headers["Content-Length"]))
                 self.send_response(400)
                 self.end_headers()
                 self.wfile.write(b"budget exceeded")

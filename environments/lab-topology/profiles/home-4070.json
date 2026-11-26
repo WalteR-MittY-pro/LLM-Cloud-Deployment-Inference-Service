@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "id": "home-4070",
+  "kind": "home_host",
+  "expected_gpu": "RTX 4070 Ti SUPER",
+  "target_gpu_count": 1,
+  "environment_hint": "native-linux preferred; WSL2 single-GPU fallback",
+  "planned_days": [
+    "01-17"
+  ],
+  "policy": {
+    "allow_host_setup_only_with_owner_approval": true,
+    "allow_home_cluster_admin_only_with_explicit_context": false,
+    "allow_cloud_host_mutation": false,
+    "allow_cross_wan_tp_or_kv_transfer": false,
+    "preserve_platform_gpu_visibility": true
+  },
+  "verification": "not_run"
+}

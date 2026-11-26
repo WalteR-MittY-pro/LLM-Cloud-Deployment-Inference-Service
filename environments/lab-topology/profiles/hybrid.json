@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "id": "hybrid",
+  "kind": "api_federation",
+  "expected_gpu": "home RTX replicas and H200 API backends",
+  "target_gpu_count": null,
+  "environment_hint": "separate administrative domains; secure application-layer API only",
+  "planned_days": [
+    "28"
+  ],
+  "policy": {
+    "allow_host_setup_only_with_owner_approval": false,
+    "allow_home_cluster_admin_only_with_explicit_context": true,
+    "allow_cloud_host_mutation": false,
+    "allow_cross_wan_tp_or_kv_transfer": false,
+    "preserve_platform_gpu_visibility": true
+  },
+  "verification": "not_run"
+}

@@ -1,5 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from argparse import Namespace
+from functools import partial
+from urllib.request import HTTPRedirectHandler, ProxyHandler, build_opener
 import hashlib
 import json
 from pathlib import Path
@@ -26,6 +28,18 @@ def load_workload(filename):
     return sorted(rows, key=lambda r: r["arrival_ms"])
 
 
+class NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
+def hybrid_endpoints(home_port, cloud_port, route):
+    if home_port == cloud_port or not all(1 <= p <= 65535 for p in (home_port, cloud_port)):
+        raise ValueError("Hybrid needs distinct home/cloud loopback ports in 1..65535")
+    backends = {"home": f"http://127.0.0.1:{home_port}", "cloud": f"http://127.0.0.1:{cloud_port}"}
+    return backends if route == "round-robin" else {route: backends[route]}
+
+
 def run(args, path, meta):
     sys.path.insert(0, str(ROOT / "course/day-01"))
     from client import run as chat, read_chat_stream, list_models, open_stream
@@ -45,13 +59,28 @@ def run(args, path, meta):
         tokenizer_revision=args.tokenizer_revision,
         workload_sha256=hashlib.sha256(payload).hexdigest(),
     )
-    available = list_models(args.base_url, args.timeout)
+    endpoints = {"service": args.base_url}
+    discover = list_models
+    if args.day == "28":
+        if args.level2 or args.base_url != "http://127.0.0.1:8000":
+            raise ValueError("Hybrid uses its own loopback ports and the verified HTTP transport")
+        if args.route == "round-robin" and len(rows) < 2:
+            raise ValueError("Hybrid round-robin needs at least two workload rows to exercise both backends")
+        endpoints = hybrid_endpoints(args.home_port, args.cloud_port, args.route)
+        # Both sockets terminate on the router host. SSH/authorized proxies are provisioned separately.
+        loopback = build_opener(ProxyHandler({}), NoRedirect()).open
+        discover = partial(list_models, opener=loopback)
+        connect = partial(open_stream, opener=loopback)
+    available = {backend: discover(url, args.timeout) for backend, url in endpoints.items()}
+    names = tuple(endpoints)
     failed = 0
     for repeat in range(args.warmup + args.repeat):
         phase = "warmup" if repeat < args.warmup else "steady"
 
         def request(i, row):
+            backend = names[i % len(names)]
             obs = {
+                "backend": backend,
                 "request_id": row["request_id"],
                 "iteration": repeat,
                 "phase": phase,
@@ -64,7 +93,7 @@ def run(args, path, meta):
                 model=args.model,
                 prompt=row["prompt"],
                 max_tokens=row["output_token_budget"],
-                base_url=args.base_url,
+                base_url=endpoints[backend],
                 timeout=args.timeout,
                 record=None,
             )
@@ -78,7 +107,7 @@ def run(args, path, meta):
                         observation=obs,
                         echo=False,
                         raw_log=raw,
-                        available=available,
+                        available=available[backend],
                         connect=connect,
                     )
                 obs.update(status="ok", answer=answer["answer"], text_chunks=answer["text_chunks"])

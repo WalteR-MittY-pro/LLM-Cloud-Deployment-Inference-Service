@@ -1,8 +1,8 @@
 # LLM Inference Lab
 
-在 28 天里，从一次真实 GPU 模型调用开始，亲手实现推理循环、KV Cache、调度器与 GPU kernel，最后用两张卡对比面向 Agent 会话的路由策略。
+在 28 天里，从一次真实 GPU 模型调用开始，亲手实现推理循环、KV Cache、调度器与 GPU kernel，最后在家庭 RTX 与云端 H200 的 API 之间回放 Agent 会话，并比较路由策略。
 
-**[开始第 1 天](course/day-01/README.md)** · **[查看 28 天课程目录](course/README.md)**
+**[Day 00 · Infrastructure Bootstrap](course/day-00/README.md)** · **[开始第 1 天](course/day-01/README.md)** · **[查看 28 天课程目录](course/README.md)**
 
 Day 01–05 已提供教材、图示、练习、独立参考和测试。Day 03 的 Qwen3 forward 经 Day 04 接入 KV cache，Day 05 直接用于生成。Day 06–28 有逐日要求，后续按批次实施。见[课程审查与建设进度](docs/course-review.md)。
 

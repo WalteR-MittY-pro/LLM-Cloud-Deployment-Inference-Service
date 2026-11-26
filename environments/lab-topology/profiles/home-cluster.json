@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "id": "home-cluster",
+  "kind": "home_k3s",
+  "expected_gpu": "two distinct home RTX GPU nodes",
+  "target_gpu_count": 2,
+  "environment_hint": "native Linux, wired LAN",
+  "planned_days": [
+    "21-25",
+    "27",
+    "28"
+  ],
+  "policy": {
+    "allow_host_setup_only_with_owner_approval": true,
+    "allow_home_cluster_admin_only_with_explicit_context": true,
+    "allow_cloud_host_mutation": false,
+    "allow_cross_wan_tp_or_kv_transfer": false,
+    "preserve_platform_gpu_visibility": true
+  },
+  "verification": "not_run"
+}
