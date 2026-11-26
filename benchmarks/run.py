@@ -22,6 +22,7 @@ def main():
     lab.add_argument("--threads", type=int, default=1)
     lab.add_argument("--warmup", type=int, default=1)
     lab.add_argument("--repeat", type=int, default=3)
+    lab.add_argument("--layout", choices=["contiguous", "strided"], default="contiguous")
     lab.add_argument("--length", type=int, default=16)
     lab.add_argument("--budget", type=int, default=6)
     lab.add_argument("--dtype", choices=["float32", "float16", "bfloat16"], default="float32")

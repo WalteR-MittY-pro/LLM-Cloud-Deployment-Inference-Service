@@ -23,7 +23,10 @@ X[B,S,H] ── 合并前两轴 ──► [M,H]       M = B×S
 make test DAY=02
 make lab DAY=02 ARGS="--length 1 --dtype float32 --warmup 3 --repeat 20"
 make lab DAY=02 ARGS="--length 128 --dtype float32 --warmup 3 --repeat 20"
+make lab DAY=02 ARGS="--length 128 --layout strided --dtype float32 --warmup 3 --repeat 20"
 ~~~
+
+后两条的 seed、数值和形状相同，只有存储布局变化。观察 requests.jsonl 的 input_shape、stride、contiguous；造出非连续输入的复制放在计时区间外。
 
 timed 在 CPU 用单调时钟，在同一 CUDA 流分别记录开始/结束事件并等待结束事件。只围住 Python 调用可能只测到提交时间。GPU Event 时间不包括主机到设备搬运；当前输入事先留在设备上。报告 max_abs_error、dtype、设备、shape 和重复分布。低精度误差用 FP32 的同输入对照。
 

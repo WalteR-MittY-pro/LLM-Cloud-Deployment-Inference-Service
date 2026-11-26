@@ -34,7 +34,7 @@ nvidia-smi topo -m | tee "$SESSION"/topology.txt
 
 记录分配到的型号、显存、整卡或 MIG、其他可用卡是否同机、节点间网络和模型缓存所在磁盘。双卡与 Kubernetes 权限留给后续课程，今天只需一张分配给你的卡。若 nvidia-smi 本身就失败，先确认当前是在作业的 GPU 节点。
 
-服务器需要 Git、curl、uv、可访问的软件源和模型缓存。先运行 `uv --version`；没有 uv 时按[官方安装说明](https://docs.astral.sh/uv/getting-started/installation/)安装到自己的用户目录。模型权重约占 1.2 GB 和 8 GB（BF16 粗估），预留包、内核、缓存和临时空间。需要换缓存磁盘时，在下载前将 HF_HOME 指向自己可写的目录。
+服务器需要 Git、curl、uv、可访问的软件源和模型缓存。先运行 `uv --version`；没有 uv 时按[官方安装说明](https://docs.astral.sh/uv/getting-started/installation/)安装到自己的用户目录。固定 0.6B 快照的 Safetensors 头部列出 751,632,384 个 BF16 元素，对应约 1.50 GB 权重；4B 按参数量粗估约 8 GB，预留包、内核、缓存和临时空间。需要换缓存磁盘时，在下载前将 HF_HOME 指向自己可写的目录。
 
 ~~~bash
 make -C ../.. setup ENV=vllm

@@ -26,7 +26,7 @@ make lab DAY=03 ARGS="--length 6 --repeat 3"
 make lab DAY=03 IMPL=reference ARGS="--pretrained --warmup 0 --repeat 1"
 ~~~
 
-最后一条首次需下载约 1.2 GB 权重，FP32 运行需额外内存；默认随机权重不需下载。报告记录最大绝对误差、形状、stride、dtype、atol/rtol。CPU FP32 对照 3e-5；改 BF16 时重新解释容差。看见广播维度正确仍有偏差时，从 q_norm/k_norm、RoPE 的通道配对、head 分组逐项排查。精确到逐位相等不适合作为跨后端浮点验收条件。
+最后一条首次需下载约 1.50 GB 权重，FP32 运行需额外内存；默认随机权重不需下载。报告记录最大绝对误差、形状、stride、dtype、atol/rtol。CPU FP32 对照 3e-5；改 BF16 时重新解释容差。看见广播维度正确仍有偏差时，从 q_norm/k_norm、RoPE 的通道配对、head 分组逐项排查。精确到逐位相等不适合作为跨后端浮点验收条件。
 
 固定源码 · [模型配置](https://huggingface.co/Qwen/Qwen3-0.6B/blob/c1899de289a04d12100db370d81485cdf75e47ca/config.json) · [Transformers Qwen3Attention.forward、Qwen3DecoderLayer.forward 及 Qwen3ForCausalLM.forward](https://github.com/huggingface/transformers/blob/8cb5963cc22174954e7dca2c0a3320b7dc2f4edc/src/transformers/models/qwen3/modeling_qwen3.py)
 

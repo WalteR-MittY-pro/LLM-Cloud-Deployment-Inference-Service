@@ -5,6 +5,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest.mock import patch
@@ -79,6 +80,10 @@ class APIHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b'data: {"choices":[{"delta":{"role":"assistant"}}]}\n\n')
         self.wfile.write(b'data: {"choices":[{"delta":{"content":"two tokens"}}]}\n\n')
+        if payload["messages"][0]["content"] == "stall":
+            self.wfile.flush()
+            time.sleep(1)
+            return
         if payload["messages"][0]["content"] != "cut":
             self.wfile.write(b"data: [DONE]\n\n")
 
@@ -114,7 +119,7 @@ class CLITests(unittest.TestCase):
                     "--repeat",
                     "1",
                 ]
-                for prompt, expected in [("ok", 0), ("cut", 1), ("bad", 1)]:
+                for prompt, expected in [("ok", 0), ("cut", 1), ("bad", 1), ("stall", 1)]:
                     work.write_text(
                         json.dumps(
                             dict(
@@ -126,7 +131,8 @@ class CLITests(unittest.TestCase):
                             )
                         )
                     )
-                    p = subprocess.run(cmd, cwd=ROOT, env=os.environ, capture_output=True, text=True)
+                    variant = [*cmd, "--timeout", "0.2"] if prompt == "stall" else cmd
+                    p = subprocess.run(variant, cwd=ROOT, env=os.environ, capture_output=True, text=True)
                     self.assertEqual(p.returncode, expected, p.stderr)
                     run = Path(p.stdout.split("RUN=")[1].splitlines()[0])
                     row = json.loads((run / "requests.jsonl").read_text())
@@ -136,10 +142,12 @@ class CLITests(unittest.TestCase):
                         self.assertEqual((run / "stream-0-0.sse").read_bytes(), b"context length exceeded")
                     else:
                         self.assertIsNotNone(row["first_text_ms"])
+                    if prompt == "stall":
+                        self.assertIn("timed out", row["error"])
                     self.assertIsNone(row["ttft_ms"])
                     self.assertEqual(json.loads((run / "run.json").read_text())["exit_code"], expected)
                     self.assertTrue((run / "stream-0-0.sse").is_file())
-                self.assertEqual(len(list((Path(tmp) / "day-01").iterdir())), 3)
+                self.assertEqual(len(list((Path(tmp) / "day-01").iterdir())), 4)
         finally:
             server.shutdown()
             server.server_close()

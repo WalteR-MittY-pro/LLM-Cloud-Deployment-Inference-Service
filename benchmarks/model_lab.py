@@ -35,19 +35,29 @@ def run(args, path, meta):
     day = int(args.day)
     if day == 2:
         x = torch.randn(1, args.length, 128, device=device, dtype=dtype)
+        if args.layout == "strided":
+            x = x.transpose(1, 2).contiguous().transpose(1, 2)
         w = torch.randn(128, 256, device=device, dtype=dtype)
         project = lesson(2, args.impl).project
         expected = torch.nn.functional.linear(x.float(), w.float().T)
 
         def experiment(observed):
             y, elapsed, peak = measured(lambda: project(x, w), device)
-            tolerance = {torch.float32: 2e-5, torch.float16: 0.03, torch.bfloat16: 0.25}[dtype]
-            torch.testing.assert_close(y.float(), expected, atol=tolerance, rtol=tolerance)
+            atol, rtol = {
+                torch.float32: (2e-5, 2e-5),
+                torch.float16: (0.008, 0.002),
+                torch.bfloat16: (0.06, 0.009),
+            }[dtype]
+            torch.testing.assert_close(y.float(), expected, atol=atol, rtol=rtol)
             return dict(
                 elapsed_ms=elapsed,
                 extra_peak_bytes=peak,
                 shape=list(y.shape),
+                input_shape=list(x.shape),
                 stride=list(x.stride()),
+                contiguous=x.is_contiguous(),
+                atol=atol,
+                rtol=rtol,
                 max_abs_error=(y.float() - expected).abs().max().item(),
             )
     else:
