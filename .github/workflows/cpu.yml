@@ -1,5 +1,13 @@
 name: CPU course checks
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      pretrained:
+        description: "Run the pinned Qwen3-0.6B CPU parity experiments (1.50 GB)"
+        type: boolean
+        default: false
 jobs:
   reference:
     runs-on: ubuntu-24.04
@@ -11,3 +19,28 @@ jobs:
       - run: make setup ENV=cpu
       - run: make check
       - run: make lab DAY=05 IMPL=reference ARGS="--warmup 0 --repeat 1"
+      - name: Check pretrained block, logits, KV and greedy output on CPU
+        if: github.event_name == 'workflow_dispatch' && inputs.pretrained
+        timeout-minutes: 20
+        env:
+          HF_HUB_DISABLE_XET: "1"
+        run: |
+          for day in 03 04 05; do
+            make lab DAY=$day IMPL=reference ARGS="--pretrained --warmup 0 --repeat 1 --budget 6"
+          done
+      - name: Show numerical evidence
+        if: always() && github.event_name == 'workflow_dispatch' && inputs.pretrained
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for path in sorted(Path("runs").glob("day-*/*/run.json")):
+              meta = json.loads(path.read_text())
+              if not meta["config"].get("pretrained"):
+                  continue
+              print(meta["day"], meta["status"], meta["model_revision"], meta["error"])
+              for line in (path.parent / "requests.jsonl").read_text().splitlines():
+                  row = json.loads(line)
+                  keys = ("block_max_abs", "logits_max_abs", "kv_tensor_bytes", "predicted_kv_bytes", "token_ids")
+                  print({key: row[key] for key in keys if key in row})
+          PY
