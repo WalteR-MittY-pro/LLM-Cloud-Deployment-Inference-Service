@@ -1,0 +1,17 @@
+[project]
+name = "inference-lab-lessons"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = ["torch==2.8.0", "transformers==4.57.1", "ruff==0.14.3", "jsonschema==4.25.1"]
+
+[tool.uv]
+package = false
+environments = ["sys_platform == 'darwin' and platform_machine == 'arm64'", "sys_platform == 'linux' and platform_machine == 'x86_64'"]
+
+[[tool.uv.index]]
+name = "cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "cpu", marker = "sys_platform == 'linux'" }]

@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "request_id",
+    "session_id",
+    "arrival_ms",
+    "prompt",
+    "output_token_budget"
+  ],
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "arrival_ms": {
+      "type": "number",
+      "minimum": 0
+    },
+    "prompt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "output_token_budget": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "input_tokens": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "shared_prefix_tokens": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "prefix_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tool_wait_ms": {
+      "type": "number",
+      "minimum": 0
+    },
+    "parent_request_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

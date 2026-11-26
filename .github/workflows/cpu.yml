@@ -1,0 +1,13 @@
+name: CPU course checks
+on: [push, pull_request]
+jobs:
+  reference:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.8"
+      - run: make setup ENV=cpu
+      - run: make check
+      - run: make lab DAY=05 IMPL=reference ARGS="--warmup 0 --repeat 1"

@@ -1,0 +1,2 @@
+{"request_id":"q1","session_id":"s1","arrival_ms":0,"prompt":"用一句话解释 KV Cache。","output_token_budget":32}
+{"request_id":"q2","session_id":"s2","arrival_ms":20,"prompt":"Prefill 处理哪一段输入？","output_token_budget":32}

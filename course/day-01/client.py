@@ -4,6 +4,7 @@ import argparse
 import json
 import time
 from pathlib import Path
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 
@@ -26,11 +27,18 @@ def read_chat_stream(lines):
     raise ValueError("连接提前关闭，缺少 [DONE]")
 
 
-def run(args, build_request):
+def list_models(base_url, timeout):
+    with urlopen(f"{base_url.rstrip('/')}/v1/models", timeout=min(15, timeout)) as response:
+        return [m["id"] for m in json.load(response)["data"]]
+
+
+def run(args, build_request, parse_stream=read_chat_stream, *, observation=None, echo=True,
+        raw_log=None, available=None):
+    observation = {} if observation is None else observation
     body = build_request(args.model, args.prompt, args.max_tokens)
     base = args.base_url.rstrip("/")
-    with urlopen(f"{base}/v1/models", timeout=15) as response:
-        available = [m["id"] for m in json.load(response)["data"]]
+    if available is None:
+        available = list_models(base, args.timeout)
     if args.model not in available:
         raise ValueError(f"请求模型 {args.model} 未加载，服务端已列出 {available}")
 
@@ -38,16 +46,33 @@ def run(args, build_request):
                       headers={"Content-Type": "application/json"})
     start = time.perf_counter()
     chunks = []
-    with urlopen(request, timeout=120) as response:
-        for text in read_chat_stream(response):
+    try:
+        response = urlopen(request, timeout=args.timeout)
+    except HTTPError as exc:
+        with exc:
+            detail = exc.read(65536)
+        if raw_log is not None:
+            raw_log.write(detail)
+        raise RuntimeError(f"HTTP {exc.code}: {detail.decode('utf-8', errors='replace')}") from exc
+    with response:
+        def lines():
+            for line in response:
+                if raw_log is not None:
+                    raw_log.write(line)
+                yield line
+
+        for text in parse_stream(lines()):
             if not chunks:
                 first_text_ms = (time.perf_counter() - start) * 1000
+                observation["first_text_ms"] = first_text_ms
             chunks.append(text)
-            print(text, end="", flush=True)
+            if echo:
+                print(text, end="", flush=True)
     elapsed_ms = (time.perf_counter() - start) * 1000
     if not chunks:
         raise ValueError("流已结束，但没有收到回答文本")
-    print()
+    if echo:
+        print()
     record = {
         "available_models": available, "request": body, "answer": "".join(chunks),
         "done": True, "text_chunks": len(chunks),
@@ -55,9 +80,12 @@ def run(args, build_request):
     }
     if args.record:
         args.record.parent.mkdir(parents=True, exist_ok=True)
-        args.record.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n",
-                               encoding="utf-8")
-    print(f"首段正文 {first_text_ms:.1f} ms，总耗时 {elapsed_ms:.1f} ms")
+        with args.record.open("x", encoding="utf-8") as out:
+            out.write(json.dumps(record, ensure_ascii=False, indent=2) + "\n")
+    observation.update(first_text_ms=record["first_text_ms"], elapsed_ms=record["end_to_end_ms"])
+    if echo:
+        print(f"首段正文 {first_text_ms:.1f} ms，总耗时 {elapsed_ms:.1f} ms")
+    return record
 
 
 if __name__ == "__main__":
@@ -68,9 +96,14 @@ if __name__ == "__main__":
     parser.add_argument("--base-url", default="http://127.0.0.1:8000")
     parser.add_argument("--record", type=Path, help="成功结束时保存 JSON 记录")
     parser.add_argument("--reference", action="store_true", help="使用独立参考答案")
+    parser.add_argument("--timeout", type=float, default=120, help="单次网络读取超时（秒）")
+    parser.add_argument("--level2", action="store_true", help="使用自己的 SSE 实现")
     args = parser.parse_args()
     if args.reference:
         from reference.request_body import build_request
     else:
         from starter.request_body import build_request
-    run(args, build_request)
+    parse = read_chat_stream
+    if args.level2 and not args.reference:
+        from starter.stream import read_chat_stream as parse
+    run(args, build_request, parse)

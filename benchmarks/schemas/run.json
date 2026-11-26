@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "run_id",
+    "schema_version",
+    "day",
+    "started_at",
+    "git_commit",
+    "model_revision",
+    "tokenizer_revision",
+    "environment",
+    "status",
+    "source",
+    "config",
+    "exit_code",
+    "error"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "day": {
+      "type": "string",
+      "pattern": "^[0-9]{2}$"
+    },
+    "source": {
+      "enum": [
+        "unverified",
+        "api_observed",
+        "gpu_measured",
+        "cpu_measured",
+        "simulation"
+      ]
+    },
+    "status": {
+      "enum": [
+        "running",
+        "ok",
+        "failed"
+      ]
+    },
+    "config": {
+      "type": "object"
+    },
+    "exit_code": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "environment": {
+      "type": "object"
+    }
+  }
+}
