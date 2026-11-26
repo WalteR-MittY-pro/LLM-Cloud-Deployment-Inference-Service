@@ -4,7 +4,18 @@
 
 **[开始第 1 天](course/day-01/README.md)** · **[查看 28 天课程目录](course/README.md)**
 
-第 1 天包含从零部署指南、固定版本的服务配置、练习骨架、测试和独立参考实现。Day 02–28 已写好每天的实验要求、交付物和验收条件；后续实现随学习进度展开。
+Day 01–05 已提供教材、图示、练习、独立参考和测试。Day 03 的 Qwen3 forward 经 Day 04 接入 KV cache，Day 05 直接用于生成。Day 06–28 有逐日要求，后续按批次实施。见[课程审查与建设进度](docs/course-review.md)。
+
+## 本地先跑通第一周
+
+~~~bash
+make doctor
+make setup ENV=cpu
+make check
+make lab DAY=05 IMPL=reference ARGS="--length 8 --budget 4"
+~~~
+
+练习用 `make test DAY=03`；参考用 `make test DAY=03 IMPL=reference`。两者执行同一套测试。[环境选择](environments/README.md)与[实验协议](docs/experiment-protocol.md)说明如何在 GPU 上复现。
 
 ## 在 GPU 服务器开始
 

@@ -1,5 +1,7 @@
 # Day 04 · 让 Attention 复用历史 KV
 
+**[先读本课的原理、图示、走读与自测](lesson.md)** · [实验记录协议](../../docs/experiment-protocol.md)
+
 生成第 101 个 token 时，前 100 个 token 的 K/V 已算过。今天要让缓存省掉重算，并证明复用后输出仍然正确。
 
 **实验起点**　复用 Day 03 的 Attention 和相同输入；在单 GPU 固定 dtype、batch 和 token 序列。

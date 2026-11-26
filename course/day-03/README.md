@@ -1,5 +1,7 @@
 # Day 03 · 手写 Decoder-only Transformer Forward
 
+**[先读本课的原理、图示、走读与自测](lesson.md)** · [实验记录协议](../../docs/experiment-protocol.md)
+
 给定一行 token ID，模型在哪一步把它变成对下一个 token 的打分？今天从 embedding 写到 logits，每次变形都标明轴的语义。
 
 **实验起点**　先用随机权重的小模型；再加载与 Day 01 相同 revision 的 Qwen 小模型作为预训练对照。
