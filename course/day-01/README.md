@@ -52,6 +52,31 @@ PY
 
 看见张量结果 2.0，说明这个 Python 环境已经能在 GPU 执行计算。environments/vllm/uv.lock 固定 Linux 服务依赖，serve.sh 固定两种模型及 tokenizer 的 revision。驱动与 wheel 不匹配时，带着驱动版本、torch.version.cuda 和报错核对安装矩阵；共享节点的驱动由平台管理。[vLLM 0.34.0 GPU 安装说明](https://docs.vllm.ai/en/v0.34.0/getting_started/installation/gpu/)
 
+## 服务器已有模型权重时
+
+完成上面的环境检查后，两个终端都进入本课目录。终端 A 传入已挂载的 Hugging Face 格式主模型目录，里面应有 config.json、完整权重和 tokenizer。下面的路径替换成服务器上的实际位置。
+
+~~~bash
+MODEL_DIR=/path/to/Qwen_Qwen3.8-27B
+bash config/serve.sh "$MODEL_DIR"
+~~~
+
+终端 B 先检查模型列表，再验证一次流式对话。共享盘部署的 API 名称固定为 `day01-local`。
+
+~~~bash
+curl -fsS http://127.0.0.1:8000/v1/models
+python client.py --reference --model day01-local
+~~~
+
+若另有配套的 Qwen3 DSpark 草稿，先用 Ctrl-C 停止终端 A 的服务，等显存释放后再启动以下组合。主模型验证草稿提出的 token。启动脚本从草稿自身的 config.json 读取 block_size；服务器使用本地权重和 tokenizer。
+
+~~~bash
+DRAFT_DIR=/path/to/Qwen3.8-27B-DSpark
+bash config/serve.sh "$MODEL_DIR" "$DRAFT_DIR"
+~~~
+
+用终端 B 的同一条命令复验。做 Day 01 的 Benchmark 时传 `--model day01-local`，分别记录主模型、草稿的快照标识及是否开启 DSpark。课程默认的 0.6B/4B 部署与验收步骤见下文。[原始草稿模型卡](https://huggingface.co/RadixArk/Qwen3.8-27B-DSpark) · [vLLM 0.34.0 推测解码配置](https://docs.vllm.ai/en/v0.34.0/features/speculative_decoding/)
+
 ## 2. 用 curl 打通最短链路
 
 终端 A 在本课目录运行以下命令，保持它在前台。第一次会下载模型。等待服务开始监听，再转到终端 B。
