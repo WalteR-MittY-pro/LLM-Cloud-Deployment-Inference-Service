@@ -1,7 +1,5 @@
 """教学 forward：借用 HF 权重容器，不调用其 attention、block 或模型 forward。"""
 
-import math
-
 import torch
 import torch.nn.functional as F
 from transformers import Qwen3Config, Qwen3ForCausalLM
@@ -40,7 +38,8 @@ def rms(x, weight, eps):
 
 def angles(positions, dim, theta, dtype):
     exponent = torch.arange(0, dim, 2, device=positions.device).float() / dim
-    phase = positions.float()[:, None] / theta**exponent
+    inv_freq = 1.0 / (theta**exponent)
+    phase = positions.float()[:, None] * inv_freq
     phase = torch.cat((phase, phase), dim=-1)
     return phase.cos().to(dtype), phase.sin().to(dtype)
 
@@ -61,7 +60,7 @@ def attend(q, k, v, past=None):
     groups = q.size(1) // k.size(1)
     keys = k.repeat_interleave(groups, dim=1)
     values = v.repeat_interleave(groups, dim=1)
-    scores = (q @ keys.transpose(-1, -2)) / math.sqrt(q.size(-1))
+    scores = (q @ keys.transpose(-1, -2)) * (q.size(-1) ** -0.5)
     rows = torch.arange(q.size(2), device=q.device) + offset
     cols = torch.arange(k.size(2), device=q.device)
     scores = scores.masked_fill(cols > rows[:, None], float("-inf"))
@@ -78,11 +77,11 @@ def decoder_block(layer, x, cos, sin, past, attention=attend):
     def heads(projection, count):
         # 本课固定的 Qwen3 配置使用无偏置 Q/K/V 投影。
         projected = project(norm, projection.weight.T)
-        return projected.reshape(b, s, count, cfg.head_dim).transpose(1, 2)
+        return projected.reshape(b, s, count, cfg.head_dim)
 
-    q = rms(heads(att.q_proj, cfg.num_attention_heads), att.q_norm.weight, cfg.rms_norm_eps)
-    k = rms(heads(att.k_proj, cfg.num_key_value_heads), att.k_norm.weight, cfg.rms_norm_eps)
-    v = heads(att.v_proj, cfg.num_key_value_heads)
+    q = rms(heads(att.q_proj, cfg.num_attention_heads), att.q_norm.weight, cfg.rms_norm_eps).transpose(1, 2)
+    k = rms(heads(att.k_proj, cfg.num_key_value_heads), att.k_norm.weight, cfg.rms_norm_eps).transpose(1, 2)
+    v = heads(att.v_proj, cfg.num_key_value_heads).transpose(1, 2)
     context, cache = attention(rotate(q, cos, sin), rotate(k, cos, sin), v, past)
     x = x + att.o_proj(context.transpose(1, 2).reshape(b, s, -1))
     norm = rms(x, layer.post_attention_layernorm.weight, cfg.rms_norm_eps)

@@ -107,6 +107,7 @@ def run(args, path, meta):
                 cfg = model.config
                 return dict(
                     elapsed_ms=incremental,
+                    decode_max_abs=(cached[:, -1] - full[:, -1]).abs().max().item(),
                     prefill_ms=prefill,
                     recompute_ms=recompute,
                     prefill_extra_peak_bytes=prefill_peak,
