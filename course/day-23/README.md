@@ -2,7 +2,7 @@
 
 节点能看到卡，不代表一个 Pod 已经申请并获得了卡。今天从节点资源一直追到容器中的第一次模型输出。
 
-**实验起点**　真实 GPU Kubernetes 集群和可用 namespace。核对现有 Device Plugin、Operator 或 MIG 设置；集群组件变更由有权限的人执行。
+**实验起点**　`home-cluster` 的两台家庭 RTX Linux 节点。先核对已有 Device Plugin/Operator、runtimeClass 和实验 namespace；从 [Day 00 清单](../day-00/README.md)渲染单副本起步。
 
 ## 动手要求
 

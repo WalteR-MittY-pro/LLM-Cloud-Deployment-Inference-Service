@@ -2,7 +2,7 @@
 
 Kubernetes 能选中一个就绪端点，LLM 服务还想知道该端点正在排多少请求、缓存了哪些前缀。今天追踪一次额外的选择过程。
 
-**实验起点**　固定 llm-d release；使用现有 Gateway、双副本 GPU 服务和足够的 namespace 权限。Day 28 主项目可选 Dynamo、llm-d 或最小自研 Router。
+**实验起点**　`home-cluster` 的家庭双 RTX K3s，固定 llm-d release；核对 Gateway、InferencePool 与 namespace 权限。用已验证的小模型双副本开始。
 
 ## 动手要求
 

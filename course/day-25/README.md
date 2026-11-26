@@ -2,7 +2,7 @@
 
 用户在等首 token 时，GPU 利用率可能很高也可能很低。把请求、引擎和 GPU 的观测对齐，再决定加卡能否帮忙。
 
-**实验起点**　复用 Day 24 的服务、Day 12 的 SLO 与负载。检查 Prometheus、Grafana、DCGM 和指标适配器的可用状态。
+**实验起点**　家庭 K3s 的 Day 24 服务与 Day 12 的 SLO/负载。核对 Prometheus、Grafana、DCGM 和指标适配器的可用状态，区分两节点物理容量与副本就绪状态。
 
 ## 动手要求
 

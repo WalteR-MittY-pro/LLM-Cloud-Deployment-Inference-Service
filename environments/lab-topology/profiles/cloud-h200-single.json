@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "cloud-h200-single",
+  "kind": "managed_container",
+  "expected_gpu": "H200",
+  "target_gpu_count": 1,
+  "environment_hint": "SSH into platform container",
+  "planned_days": [
+    "01",
+    "06-17"
+  ],
+  "policy": {
+    "allow_host_setup_only_with_owner_approval": false,
+    "allow_home_cluster_admin_only_with_explicit_context": false,
+    "allow_cloud_host_mutation": false,
+    "allow_cross_wan_tp_or_kv_transfer": false,
+    "preserve_platform_gpu_visibility": true
+  },
+  "verification": "not_run"
+}

@@ -2,7 +2,7 @@
 
 一个 Pod 退出后，哪个组件把副本数补回来？先用轻量 HTTP 服务观察控制器，不必为学习生命周期占住 GPU。
 
-**实验起点**　本地 kind 或 Minikube CPU 集群，使用自己的 namespace。
+**实验起点**　家庭双机 K3s 的实验 namespace（`home-cluster`）。集群未就绪时先在本地 kind/Minikube CPU 集群练生命周期，实际双节点恢复另行验收。
 
 ## 动手要求
 

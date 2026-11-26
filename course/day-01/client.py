@@ -27,14 +27,14 @@ def read_chat_stream(lines):
     raise ValueError("连接提前关闭，缺少 [DONE]")
 
 
-def list_models(base_url, timeout):
-    with urlopen(f"{base_url.rstrip('/')}/v1/models", timeout=min(15, timeout)) as response:
+def list_models(base_url, timeout, opener=urlopen):
+    with opener(f"{base_url.rstrip('/')}/v1/models", timeout=min(15, timeout)) as response:
         return [m["id"] for m in json.load(response)["data"]]
 
 
-def open_stream(request, timeout, raw_log=None):
+def open_stream(request, timeout, raw_log=None, *, opener=urlopen):
     try:
-        return urlopen(request, timeout=timeout)
+        return opener(request, timeout=timeout)
     except HTTPError as exc:
         with exc:
             detail = exc.read(65536)

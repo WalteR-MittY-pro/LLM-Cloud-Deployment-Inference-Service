@@ -19,3 +19,11 @@
 **共享格式。** [工作负载](../benchmarks/schemas/workload.json)、[观测](../benchmarks/schemas/observation.json)及[运行](../benchmarks/schemas/run.json)采用 JSON Schema。API 输入包括可重建的 prompt、session、到达时间和输出预算。使用 `--model-revision` 和 `--tokenizer-revision` 填入实际服务日志能证实的版本；未知值保留 null。重复测量保留 iteration。有限并发时已到达的请求可在客户端等待，工作线程的 dispatch_ms 可用于识别这一部分。工具等待、依赖闭环与四种路由基线在后续批次接入。
 
 **权限和存储。** doctor 只探测当前账号可见设备、显存、拓扑、Docker 和 Kubernetes 权限；集群 RBAC 同意创建 Pod 仍需配额和设备。运行前记录节点独占状态，容器内可通过 LAB_IMAGE_DIGEST 登记实际镜像。runs/ 默认留在本地，发布证据前先去除请求正文、账号与私有节点信息。
+
+## 从 Day 00 记录执行环境
+
+`make lab DAY=00 ENV=cpu` 生成当前机器的盘点记录；在相应设备上增加 `PROFILE=home-4070` 或其他[已定义的 profile](../environments/lab-topology/profiles)。ENV 是选用的依赖锁，实际安装版本以 environment.packages 为准。environment.target 是计划，gpus/torch_cuda/topology 是观测；`--allocated-gpus N` 只记录操作者确认的分配数量。可见设备或目标卡数都不能代替平台配额。
+
+家庭 K3s 的只读探测使用 `--kube-context`；报告不记录 context 名、节点名和 GPU UUID。容器探测跳过 Docker/K8s 管理接口；家庭 Docker 探测使用本机 Unix socket。使用自定义 rootless socket 时需在相应主机另查，不能把默认 socket 不可达当作没有 Docker。独立的能力状态有 untested、blocked、passed；observed 用于设备和资源盘点。CUDA/NCCL 成功时把数值断言记入 smoke_evidence，失败仍走原有 Run ID/退出码协议。
+
+Day 19 的 API 回放只对部署好的服务送请求。Day 28 为每行请求记录选择的 home/cloud，报告列出每端的尝试数和成功数。与服务端的 Pod/容器日志对齐后再归因。跨站仅传应用层请求；关闭预分配后端或切换路由不能作为真实云端扩缩容证据。旧 Run ID 可照常出报告，缺失的 profile 显示为未指定。

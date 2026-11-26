@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "profile",
+    "kind",
+    "observed_at",
+    "target",
+    "gpus",
+    "torch_cuda",
+    "cluster",
+    "capabilities_requiring_smoke_tests"
+  ],
+  "properties": {
+    "kind": {
+      "const": "environment_observation"
+    },
+    "profile": {
+      "enum": [
+        "home-4070",
+        "home-4080",
+        "home-cluster",
+        "cloud-h200-single",
+        "cloud-h200-multi",
+        "hybrid",
+        null
+      ]
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "target": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "capabilities_requiring_smoke_tests": {
+      "type": "object",
+      "required": [
+        "cuda_execution",
+        "nccl_collective",
+        "gpu_p2p",
+        "kv_transfer",
+        "profiling_counters",
+        "docker_gpu",
+        "k8s_gpu_pod",
+        "ssh_forwarding"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "cuda_execution": {
+          "enum": [
+            "untested",
+            "blocked",
+            "passed"
+          ]
+        },
+        "nccl_collective": {
+          "enum": [
+            "untested",
+            "blocked",
+            "passed"
+          ]
+        },
+        "gpu_p2p": {
+          "enum": [
+            "untested",
+            "blocked",
+            "passed"
+          ]
+        },
+        "kv_transfer": {
+          "enum": [
+            "untested",
+            "blocked",
+            "passed"
+          ]
+        },
+        "profiling_counters": {
+          "enum": [
+            "untested",
+            "blocked",
+            "passed"
+          ]
+        },
+        "docker_gpu": {
+          "enum": [
+            "untested",
+            "blocked",
+            "passed"
+          ]
+        },
+        "k8s_gpu_pod": {
+          "enum": [
+            "untested",
+            "blocked",
+            "passed"
+          ]
+        },
+        "ssh_forwarding": {
+          "enum": [
+            "untested",
+            "blocked",
+            "passed"
+          ]
+        }
+      }
+    },
+    "gpus": {
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "untested",
+            "observed",
+            "not_available",
+            "blocked"
+          ]
+        }
+      }
+    },
+    "torch_cuda": {
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "untested",
+            "observed",
+            "not_available",
+            "blocked"
+          ]
+        }
+      }
+    },
+    "cluster": {
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "untested",
+            "observed",
+            "not_available",
+            "blocked"
+          ]
+        }
+      }
+    }
+  }
+}
