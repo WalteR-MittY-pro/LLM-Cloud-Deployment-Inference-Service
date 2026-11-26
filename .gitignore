@@ -1,5 +1,5 @@
-/bin/
-/work/
 __pycache__/
-*.pyc
-.env
+*.py[cod]
+.venv/
+runs/
+.DS_Store
