@@ -2,9 +2,11 @@
 
 import argparse
 import json
+import sys
 import time
+from http.client import HTTPException
 from pathlib import Path
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 
@@ -110,4 +112,8 @@ if __name__ == "__main__":
     parse, connect = read_chat_stream, open_stream
     if args.level2 and not args.reference:
         from starter.stream import read_chat_stream as parse, open_stream as connect
-    run(args, build_request, parse, connect=connect)
+    try:
+        run(args, build_request, parse, connect=connect)
+    except (URLError, TimeoutError, ConnectionError, HTTPException, ValueError, RuntimeError) as error:
+        print(f"\n请求未完成：{error}", file=sys.stderr)
+        sys.exit(1)

@@ -24,7 +24,7 @@
 git clone https://github.com/WalteR-MittY-pro/LLM-Inference-Lab.git llm-inference-lab
 cd llm-inference-lab/course/day-01
 mkdir -p runs
-SESSION=$(mktemp -d "$PWD/runs/session-XXXXXXXX")
+SESSION=$(mktemp -d "$PWD/runs/session-1127")
 printf '第二个终端设置 SESSION=%s\n' "$SESSION"
 git rev-parse HEAD > "$SESSION"/course-commit.txt
 nvidia-smi -L | tee "$SESSION"/gpu-list.txt
@@ -51,31 +51,6 @@ PY
 ~~~
 
 看见张量结果 2.0，说明这个 Python 环境已经能在 GPU 执行计算。environments/vllm/uv.lock 固定 Linux 服务依赖，serve.sh 固定两种模型及 tokenizer 的 revision。驱动与 wheel 不匹配时，带着驱动版本、torch.version.cuda 和报错核对安装矩阵；共享节点的驱动由平台管理。[vLLM 0.34.0 GPU 安装说明](https://docs.vllm.ai/en/v0.34.0/getting_started/installation/gpu/)
-
-## 服务器已有模型权重时
-
-完成上面的环境检查后，两个终端都进入本课目录。终端 A 传入已挂载的 Hugging Face 格式主模型目录，里面应有 config.json、完整权重和 tokenizer。下面的路径替换成服务器上的实际位置。
-
-~~~bash
-MODEL_DIR=/path/to/Qwen_Qwen3.8-27B
-bash config/serve.sh "$MODEL_DIR"
-~~~
-
-终端 B 先检查模型列表，再验证一次流式对话。共享盘部署的 API 名称固定为 `day01-local`。
-
-~~~bash
-curl -fsS http://127.0.0.1:8000/v1/models
-python client.py --reference --model day01-local
-~~~
-
-若另有配套的 Qwen3 DSpark 草稿，先用 Ctrl-C 停止终端 A 的服务，等显存释放后再启动以下组合。主模型验证草稿提出的 token。启动脚本从草稿自身的 config.json 读取 block_size；服务器使用本地权重和 tokenizer。
-
-~~~bash
-DRAFT_DIR=/path/to/Qwen3.8-27B-DSpark
-bash config/serve.sh "$MODEL_DIR" "$DRAFT_DIR"
-~~~
-
-用终端 B 的同一条命令复验。做 Day 01 的 Benchmark 时传 `--model day01-local`，分别记录主模型、草稿的快照标识及是否开启 DSpark。课程默认的 0.6B/4B 部署与验收步骤见下文。[原始草稿模型卡](https://huggingface.co/RadixArk/Qwen3.8-27B-DSpark) · [vLLM 0.34.0 推测解码配置](https://docs.vllm.ai/en/v0.34.0/features/speculative_decoding/)
 
 ## 2. 用 curl 打通最短链路
 
@@ -150,3 +125,9 @@ nvidia-smi --query-gpu=name,memory.used,memory.total --format=csv > "$SESSION"/a
 手动部署记录按 SESSION 区分。正式测量从仓库根目录走 `make lab DAY=01`，自动保存每次尝试及失败。如果暂时只有 CPU，可以完成请求体和测试，把两个模型的 GPU 验收留空。
 
 官方资料 · [vLLM Quickstart](https://docs.vllm.ai/en/v0.34.0/getting_started/quickstart/) · [Qwen3-0.6B](https://huggingface.co/Qwen/Qwen3-0.6B) · [Qwen3-4B](https://huggingface.co/Qwen/Qwen3-4B)
+
+
+## 学习结果：
+1. 启动模型什么的都是脚本，vllm命令也很基础，主要是python里http请求发送逻辑：字典->json->encode为字节码->urlopen发送请求到url上
+2. 然后就是vllm返回的时候，怎么判断连接还开着？那么当没超时且连接还开着，则可以持续接收，
+如果遇到了EOF，那么报错返回，一般是回答中断；如果超时报超时错误、如果收到error，那么就直接报请求失败，error里有失败原因，这个时候收不收到[Done]已经无所谓了；最后如果没有超时，没有error，收到done，那么说明正常结束了
